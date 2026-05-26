@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --nav: #1e3a5f;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --blue: #2563eb;
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
+  --text: #0f172a;
+  --text-dim: #64748b;
+  --insights-bg: #fffbeb;
+}
+
+* {
+  border-radius: 0 !important;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Maplibre popup overrides */
+.maplibregl-popup-content {
+  border-radius: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  max-width: 240px !important;
+}
+
+.maplibregl-popup-tip {
+  display: none !important;
+}
+
+.maplibregl-popup-close-button {
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  color: var(--text-dim) !important;
+  padding: 2px 6px !important;
+}
+
+.maplibregl-ctrl-group {
+  border-radius: 0 !important;
+}
+
+.maplibregl-ctrl button {
+  border-radius: 0 !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* Pulsing node marker */
+.node-marker {
+  width: 14px;
+  height: 14px;
+  background: #2563eb;
+  border: 2px solid white;
+  cursor: pointer;
+  position: relative;
+}
+
+.node-marker::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  background: rgba(37, 99, 235, 0.3);
+  animation: node-pulse 1.8s ease-out infinite;
+}
+
+@keyframes node-pulse {
+  0%   { transform: scale(1); opacity: 0.8; }
+  70%  { transform: scale(2.8); opacity: 0; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* Haven markers */
+.haven-marker {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1.5px solid;
+  font-size: 13px;
+  font-weight: 600;
+  transition: transform 0.12s;
+}
+
+.haven-marker:hover { transform: scale(1.15); }
+
+.haven-marker.hospital {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: white;
+}
+
+.haven-marker.shelter {
+  background: #16a34a;
+  border-color: #15803d;
+  color: white;
+}
+
+/* Road closure marker */
+.closure-marker {
+  width: 10px;
+  height: 10px;
+  background: #f97316;
+  border: 2px solid #ea580c;
+  cursor: pointer;
+}
+
+/* Power outage marker */
+.outage-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(100,116,139,0.18);
+  border: 1px solid #94a3b8;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+  padding: 2px 5px;
+}
+
+/* Popup styles */
+.sentinel-popup h4 {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+
+.sentinel-popup p {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 2px 0;
+  line-height: 1.5;
+}
+
+.sentinel-popup .mag-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 6px;
+}
+
+/* Waveform container */
+.waveform-container {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  width: 140px;
+}

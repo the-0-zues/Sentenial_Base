@@ -80,8 +80,8 @@ export function About() {
     <div className="overflow-y-auto h-full bg-[#f8fafc]">
       <div className="max-w-3xl mx-auto px-8 py-12">
 
-        {/* Section 1 — About Sentinel */}
-        <SectionTitle>ABOUT SENTINEL</SectionTitle>
+        {/* Section 1 — About Ashe */}
+        <SectionTitle>ABOUT ASHE</SectionTitle>
         <h1
           className="text-3xl font-black tracking-tight text-[#0f172a] mb-4"
           style={{ fontFamily: 'Inter, sans-serif' }}
@@ -89,7 +89,7 @@ export function About() {
           Earthquake Early Warning<br />& Emergency Response Dashboard
         </h1>
         <p className="text-[14px] text-[#334155] leading-relaxed mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Sentinel is a professional geospatial situational awareness platform built for the
+          Ashe is a professional geospatial situational awareness platform built for the
           <strong> 2026 IEEE Response Quest Challenge</strong>. It integrates real-time seismic data
           from the USGS, live weather alerts from NOAA, and a custom FPGA-based sub-20Hz sensor (NODE-01)
           to provide earlier-than-USGS earthquake detection for emergency responders.
@@ -334,7 +334,7 @@ export function About() {
           className="text-[10px] text-[#94a3b8] mt-6 text-center"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}
         >
-          SENTINEL v1.0 — 2026 IEEE Response Quest Challenge — NODE-01 Sub-20Hz FPGA Early Warning System
+          ASHE v1.0 — 2026 IEEE Response Quest Challenge — NODE-01 Sub-20Hz FPGA Early Warning System
         </p>
       </div>
     </div>

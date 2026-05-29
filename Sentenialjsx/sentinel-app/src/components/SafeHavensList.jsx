@@ -1,15 +1,15 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 const FILTERS = ['ALL', 'HOSPITALS', 'SHELTERS']
 
 export function SafeHavensList({ havens = [], loading, onSelect, selectedId }) {
   const [filter, setFilter] = useState('ALL')
 
-  const filtered = havens.filter((h) => {
+  const filtered = useMemo(() => havens.filter((h) => {
     if (filter === 'HOSPITALS') return h.type === 'hospital'
     if (filter === 'SHELTERS') return h.type === 'shelter'
     return true
-  })
+  }), [havens, filter])
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-[#e2e8f0]">

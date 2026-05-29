@@ -67,7 +67,7 @@ export function useTelemetry() {
         deltaT: deltaT ? parseFloat(deltaT.toFixed(2)) : null,
         crc_ok: Math.random() > 0.002,
       })
-    }, 100)
+    }, 250)
 
     return () => clearInterval(interval)
   }, [])

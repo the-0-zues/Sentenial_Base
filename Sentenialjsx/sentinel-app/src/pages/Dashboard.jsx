@@ -9,7 +9,7 @@ import { EarthquakeList } from '../components/EarthquakeList'
 import { TelemetryCards } from '../components/TelemetryCards'
 
 // telemetry prop injected from AppShell so NodeStatusBar & TelemetryCards share one instance
-export function Dashboard({ telemetry = {} }) {
+export function Dashboard({ telemetry = {}, storms = [] }) {
   const mapRef = useRef(null)
   const usgs = useUSGS()
   const noaa = useNOAA()
@@ -41,6 +41,7 @@ export function Dashboard({ telemetry = {} }) {
           outages={outages}
           closures={closures}
           telemetry={telemetry}
+          storms={storms}
         />
       </div>
 

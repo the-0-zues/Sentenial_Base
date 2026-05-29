@@ -48,13 +48,18 @@ const TIME_RANGES = [
 
 export function Earthquakes() {
   const { events, loading } = useUSGS()
-  const { havens } = useSafeHavens()
+  const { havens, loading: havensLoading, updateBbox } = useSafeHavens()
 
   const [minMag, setMinMag] = useState(1)
   const [timeRange, setTimeRange] = useState('24H')
   const [regionSearch, setRegionSearch] = useState('')
   const [sort, setSort] = useState({ col: 'time', dir: 'desc' })
   const [selected, setSelected] = useState(null)
+
+  const selectEvent = useCallback((ev) => {
+    setSelected(ev)
+    updateBbox([ev.lat - 2, ev.lng - 2, ev.lat + 2, ev.lng + 2])
+  }, [updateBbox])
 
   const timeMs = TIME_RANGES.find((t) => t.label === timeRange)?.ms ?? 86400_000
   const cutoff = Date.now() - timeMs
@@ -106,7 +111,6 @@ export function Earthquakes() {
     { id: 'place', label: 'LOCATION', width: 'auto' },
     { id: 'depth', label: 'DEPTH', width: '90px' },
     { id: 'time', label: 'TIME', width: '170px' },
-    { id: 'distance', label: 'DIST FROM NODE-01', width: '140px' },
   ]
 
   return (
@@ -237,11 +241,10 @@ export function Earthquakes() {
               </tr>
             ) : (
               sorted.map((ev, i) => {
-                const dist = haversineKm(NODE_LOCATION[1], NODE_LOCATION[0], ev.lat, ev.lng).toFixed(0)
                 return (
                   <tr
                     key={ev.id}
-                    onClick={() => setSelected(ev)}
+                    onClick={() => selectEvent(ev)}
                     className="border-b border-[#f1f5f9] hover:bg-[#f0f7ff] cursor-pointer transition-colors"
                     style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}
                   >
@@ -264,11 +267,6 @@ export function Earthquakes() {
                           month: 'short', day: 'numeric',
                           hour: '2-digit', minute: '2-digit',
                         })}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className="text-[11px] text-[#64748b]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-                        {dist} km
                       </span>
                     </td>
                   </tr>
@@ -322,28 +320,31 @@ export function Earthquakes() {
             </div>
 
             {/* Details row */}
-            <div className="grid grid-cols-3 border-b border-[#e2e8f0]">
-              {[
+            {(() => {
+              const distKm = haversineKm(NODE_LOCATION[1], NODE_LOCATION[0], selected.lat, selected.lng)
+              const nearNode = distKm < 300
+              const cells = [
                 { label: 'DEPTH', value: `${selected.depth?.toFixed(1)} km` },
                 { label: 'COORDINATES', value: `${selected.lat.toFixed(3)}°N ${Math.abs(selected.lng).toFixed(3)}°W` },
-                { label: 'DIST FROM NODE-01', value: `${haversineKm(NODE_LOCATION[1], NODE_LOCATION[0], selected.lat, selected.lng).toFixed(0)} km` },
-              ].map(({ label, value }) => (
-                <div key={label} className="px-5 py-3 border-r border-[#f1f5f9] last:border-r-0">
-                  <p
-                    className="text-[9px] font-bold uppercase tracking-widest text-[#94a3b8] mb-1"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.12em' }}
-                  >
-                    {label}
-                  </p>
-                  <p
-                    className="text-[12px] font-semibold text-[#0f172a]"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    {value}
-                  </p>
+                ...(nearNode ? [{ label: 'DIST FROM NODE-01', value: `${distKm.toFixed(0)} km` }] : []),
+              ]
+              return (
+                <div className={`grid grid-cols-${cells.length} border-b border-[#e2e8f0]`}>
+                  {cells.map(({ label, value }) => (
+                    <div key={label} className="px-5 py-3 border-r border-[#f1f5f9] last:border-r-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-[#94a3b8] mb-1"
+                        style={{ fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.12em' }}>
+                        {label}
+                      </p>
+                      <p className="text-[12px] font-semibold text-[#0f172a]"
+                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                        {value}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )
+            })()}
 
             {/* NODE-01 early warning banner */}
             {haversineKm(NODE_LOCATION[1], NODE_LOCATION[0], selected.lat, selected.lng) < 300 && (
@@ -397,8 +398,10 @@ export function Earthquakes() {
               >
                 NEAREST SAFE HAVENS TO EPICENTER
               </p>
-              {nearestHavens.length === 0 ? (
-                <p className="text-[11px] text-[#94a3b8]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Loading…</p>
+              {havensLoading ? (
+                <p className="text-[11px] text-[#94a3b8]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>FETCHING LOCAL RESOURCES…</p>
+              ) : nearestHavens.length === 0 ? (
+                <p className="text-[11px] text-[#94a3b8]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>No facilities found nearby.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {nearestHavens.map((h) => (

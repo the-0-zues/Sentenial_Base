@@ -4,10 +4,12 @@ import { useInsights } from './hooks/useInsights'
 import { useUSGS } from './hooks/useUSGS'
 import { useSafeHavens } from './hooks/useSafeHavens'
 import { useRoadClosures } from './hooks/useRoadClosures'
+import { useNHC } from './hooks/useNHC'
 import { TopNav } from './components/TopNav'
 import { InsightsBar } from './components/InsightsBar'
 import { NodeStatusBar } from './components/NodeStatusBar'
-import { Dashboard } from './pages/Dashboard'
+import { PublicView } from './pages/PublicView'
+import { ResponderView } from './pages/ResponderView'
 import { Earthquakes } from './pages/Earthquakes'
 import { SafeHavens } from './pages/SafeHavens'
 import { About } from './pages/About'
@@ -18,6 +20,7 @@ function AppShell() {
   const usgs = useUSGS()
   const { havens } = useSafeHavens()
   const { closures } = useRoadClosures()
+  const nhc = useNHC()
 
   const insight = useInsights({
     telemetry,
@@ -34,7 +37,8 @@ function AppShell() {
       {/* Main content area — Dashboard fills height, other pages scroll */}
       <main className="flex-1 min-h-0 overflow-hidden">
         <Routes>
-          <Route path="/" element={<Dashboard telemetry={telemetry} />} />
+          <Route path="/" element={<PublicView storms={nhc.storms} />} />
+          <Route path="/responder" element={<ResponderView telemetry={telemetry} storms={nhc.storms} />} />
           <Route path="/earthquakes" element={<div className="h-full overflow-auto"><Earthquakes /></div>} />
           <Route path="/safe-havens" element={<SafeHavens />} />
           <Route path="/about" element={<div className="h-full overflow-auto"><About /></div>} />

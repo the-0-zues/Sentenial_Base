@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react'
+import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useMemo, memo } from 'react'
 import Map, { Source, Layer, Marker, Popup, NavigationControl } from '@vis.gl/react-maplibre'
 import { MAP_STYLE_URL, NODE_LOCATION } from '../constants'
 import { LayerToggle } from './LayerToggle'
@@ -20,12 +20,13 @@ const MAG_RADIUS = [
   7, 28,
 ]
 
-const LAYER_DEFS = [
-  { id: 'earthquakes', label: 'USGS EQ', color: '#dc2626', defaultOn: true },
+const ALL_LAYER_DEFS = [
+  { id: 'earthquakes', label: 'USGS EQ', color: '#dc2626', defaultOn: true, responderOnly: true },
   { id: 'havens', label: 'SAFE HAVENS', color: '#2563eb', defaultOn: true },
   { id: 'noaa', label: 'NOAA ALERTS', color: '#dc2626', defaultOn: true },
-  { id: 'outages', label: 'PWR OUTAGES', color: '#94a3b8', defaultOn: false },
+  { id: 'outages', label: 'PWR OUTAGES', color: '#94a3b8', defaultOn: false, responderOnly: true },
   { id: 'closures', label: 'ROAD CLOSED', color: '#f97316', defaultOn: false },
+  { id: 'hurricanes', label: 'HURRICANES', color: '#7c3aed', defaultOn: true },
 ]
 
 function magColor(mag) {
@@ -47,9 +48,13 @@ function formatTime(ts) {
 }
 
 const MapPanel = forwardRef(function MapPanel(
-  { events = [], havens = [], alerts = [], outages = [], closures = [], telemetry = {} },
+  { events = [], havens = [], alerts = [], outages = [], closures = [], telemetry = {}, storms = [], mode = 'responder', userPin = null, onBaseClick },
   ref
 ) {
+  const LAYER_DEFS = useMemo(
+    () => mode === 'public' ? ALL_LAYER_DEFS.filter((l) => !l.responderOnly) : ALL_LAYER_DEFS,
+    [mode]
+  )
   const mapRef = useRef(null)
   const [viewState, setViewState] = useState({
     longitude: NODE_LOCATION[0],
@@ -73,7 +78,7 @@ const MapPanel = forwardRef(function MapPanel(
 
   const layers = useMemo(
     () => LAYER_DEFS.map((l) => ({ ...l, active: layerActive[l.id] })),
-    [layerActive]
+    [LAYER_DEFS, layerActive]
   )
 
   // Build USGS GeoJSON
@@ -97,6 +102,14 @@ const MapPanel = forwardRef(function MapPanel(
         properties: { event: f.properties?.event, headline: f.properties?.headline },
       })),
   }), [alerts])
+
+  // Build hurricane cone GeoJSON (FeatureCollections per storm, merged)
+  const hurricaneConeGeoJSON = useMemo(() => ({
+    type: 'FeatureCollection',
+    features: storms.flatMap((s) =>
+      s.cone?.features ?? []
+    ),
+  }), [storms])
 
   // Build road closures GeoJSON
   const closuresGeoJSON = useMemo(() => ({
@@ -127,9 +140,13 @@ const MapPanel = forwardRef(function MapPanel(
     return ids
   }, [layerActive])
 
+  const showNode = mode === 'responder'
+
   const handleMapClick = useCallback((e) => {
     const feat = e.features?.[0]
     if (!feat) {
+      const [lng, lat] = e.lngLat.toArray ? e.lngLat.toArray() : [e.lngLat.lng, e.lngLat.lat]
+      onBaseClick?.(lat, lng)
       setPopup(null)
       return
     }
@@ -323,6 +340,52 @@ const MapPanel = forwardRef(function MapPanel(
           </Source>
         )}
 
+        {/* Hurricane cone + markers */}
+        {layerActive.hurricanes && hurricaneConeGeoJSON.features.length > 0 && (
+          <Source id="hurricane-cone" type="geojson" data={hurricaneConeGeoJSON}>
+            <Layer
+              id="hurricane-cone-fill"
+              type="fill"
+              paint={{ 'fill-color': '#7c3aed', 'fill-opacity': 0.12 }}
+            />
+            <Layer
+              id="hurricane-cone-outline"
+              type="line"
+              paint={{ 'line-color': '#7c3aed', 'line-width': 1.5, 'line-opacity': 0.5, 'line-dasharray': [3, 2] }}
+            />
+          </Source>
+        )}
+        {layerActive.hurricanes && storms.map((s) => (
+          <Marker key={s.id} longitude={s.lng} latitude={s.lat} anchor="center"
+            onClick={(e) => {
+              e.originalEvent?.stopPropagation()
+              setPopup({
+                lng: s.lng, lat: s.lat,
+                content: (
+                  <div className="sentinel-popup">
+                    <h4>🌀 {s.classification} {s.name}</h4>
+                    <p style={{ fontWeight: 600 }}>{s.intensity} mph max winds</p>
+                    {s.pressure && <p>{s.pressure} mb central pressure</p>}
+                    <p>Moving {s.movementDir}° at {s.movementSpeed} mph</p>
+                  </div>
+                ),
+              })
+            }}
+          >
+            <div
+              style={{
+                background: '#7c3aed', color: '#fff',
+                padding: '3px 7px', fontSize: 10, fontWeight: 700,
+                fontFamily: "'IBM Plex Mono', monospace",
+                display: 'flex', alignItems: 'center', gap: 4,
+                boxShadow: '0 0 0 2px rgba(124,58,237,0.4)',
+              }}
+            >
+              🌀 {s.classification}
+            </div>
+          </Marker>
+        ))}
+
         {/* Safe Haven markers */}
         {layerActive.havens &&
           havens.map((h) => (
@@ -354,8 +417,32 @@ const MapPanel = forwardRef(function MapPanel(
             </Marker>
           ))}
 
-        {/* NODE-01 marker */}
-        <Marker
+        {/* User location pin */}
+        {userPin && (
+          <Marker longitude={userPin.lng} latitude={userPin.lat} anchor="center">
+            <div style={{ position: 'relative', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span
+                style={{
+                  position: 'absolute', width: 28, height: 28, borderRadius: '50%',
+                  background: '#2563eb', opacity: 0.25,
+                  animation: 'node-pulse 1.6s ease-out infinite',
+                }}
+              />
+              <span
+                style={{
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: '#ffffff', border: '3px solid #2563eb',
+                  boxShadow: '0 1px 4px rgba(37,99,235,0.5)',
+                  position: 'relative',
+                }}
+                title="YOUR LOCATION"
+              />
+            </div>
+          </Marker>
+        )}
+
+        {/* NODE-01 marker — responder mode only */}
+        {showNode && <Marker
           longitude={NODE_LOCATION[0]}
           latitude={NODE_LOCATION[1]}
           anchor="center"
@@ -382,7 +469,7 @@ const MapPanel = forwardRef(function MapPanel(
           }}
         >
           <div className="node-marker" title="NODE-01 · FPGA Sensor" />
-        </Marker>
+        </Marker>}
 
         {/* Popup */}
         {popup && (
@@ -407,4 +494,5 @@ const MapPanel = forwardRef(function MapPanel(
   )
 })
 
-export { MapPanel }
+const MemoMapPanel = memo(MapPanel)
+export { MemoMapPanel as MapPanel }

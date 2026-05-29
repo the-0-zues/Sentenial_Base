@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Dashboard' },
+  { to: '/', label: 'Public' },
+  { to: '/responder', label: 'Responder' },
   { to: '/earthquakes', label: 'Earthquakes' },
   { to: '/safe-havens', label: 'Safe Havens' },
   { to: '/about', label: 'About' },
@@ -40,7 +41,7 @@ export function TopNav() {
             className="text-[#1e3a5f] font-black tracking-[0.12em] text-base uppercase"
             style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.14em' }}
           >
-            SENTINEL
+            ASHE
           </span>
         </NavLink>
 

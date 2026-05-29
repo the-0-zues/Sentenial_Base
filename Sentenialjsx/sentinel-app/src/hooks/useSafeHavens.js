@@ -35,7 +35,7 @@ export function useSafeHavens(bbox = DEFAULT_BBOX) {
   const [currentBbox, setCurrentBbox] = useState(bbox)
 
   const fetchHavens = useCallback(async (b) => {
-    setState((prev) => ({ ...prev, loading: true }))
+    setState({ havens: [], loading: true, error: null })
     try {
       const query = buildOverpassQuery(b)
       const res = await fetch('https://overpass-api.de/api/interpreter', {

@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 function timeSince(ts) {
   const diff = (Date.now() - ts) / 1000
   if (diff < 60) return `${Math.round(diff)}s ago`
@@ -35,7 +37,7 @@ function MagBadge({ mag }) {
   )
 }
 
-export function EarthquakeList({ events = [], onEventClick }) {
+export const EarthquakeList = memo(function EarthquakeList({ events = [], onEventClick }) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -66,7 +68,7 @@ export function EarthquakeList({ events = [], onEventClick }) {
             Loading events…
           </div>
         ) : (
-          events.map((ev, i) => (
+          events.slice(0, 50).map((ev, i) => (
             <button
               key={ev.id}
               onClick={() => onEventClick?.(ev)}
@@ -95,4 +97,4 @@ export function EarthquakeList({ events = [], onEventClick }) {
       </div>
     </div>
   )
-}
+})
